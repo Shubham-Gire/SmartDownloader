@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Backend runtime
+*.log
+*.sqlite3
+*.db
+instance/
+.tmp/
+tmp_downloads/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+.npm/
+.pnpm-store/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+
+# Local uploads / generated files
+uploads/
+media/
