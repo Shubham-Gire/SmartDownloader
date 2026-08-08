@@ -1,17 +1,18 @@
 FROM python:3.11-slim
 
-# Install FFmpeg, FFprobe, certificates, and tools needed for Deno
+# Install FFmpeg, FFprobe, certificates, curl and unzip
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    ffmpeg \
-    ca-certificates \
-    curl \
-    unzip && \
+        ffmpeg \
+        ca-certificates \
+        curl \
+        unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Verify FFmpeg and FFprobe
-RUN which ffmpeg && \
-    which ffprobe
+RUN which ffmpeg && which ffprobe && \
+    ffmpeg -version | head -n 1 && \
+    ffprobe -version | head -n 1
 
 # Install Deno for yt-dlp JavaScript challenges
 RUN curl -fsSL https://deno.land/install.sh | sh
@@ -24,7 +25,7 @@ RUN deno --version
 
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies first
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
