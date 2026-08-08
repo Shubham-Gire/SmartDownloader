@@ -7,6 +7,7 @@ Only works on links that are publicly viewable. Private/login-gated content,
 DRM-protected content, and platform-side blocks are intentionally not
 bypassed here.
 """
+from pathlib import Path
 from typing import Optional
 
 import yt_dlp
@@ -17,6 +18,25 @@ from app.models import FormatOption, MediaInfo
 
 class ResolveError(Exception):
     pass
+
+
+def _apply_authentication(opts: dict) -> None:
+    if settings.YTDLP_COOKIES_FILE:
+        cookie_path = Path(settings.YTDLP_COOKIES_FILE).expanduser()
+        if not cookie_path.exists():
+            raise ResolveError(
+                f"YTDLP_COOKIES_FILE is configured, but the cookie file was not found: {cookie_path}"
+            )
+        opts["cookiefile"] = str(cookie_path)
+        return
+
+    if settings.YTDLP_COOKIES_FROM_BROWSER:
+        browser_value = settings.YTDLP_COOKIES_FROM_BROWSER.strip()
+        if browser_value:
+            parts = browser_value.split(":")
+            browser = parts[0].strip()
+            profile = parts[1].strip() if len(parts) > 1 else None
+            opts["cookiesfrombrowser"] = (browser, profile) if profile else (browser,)
 
 
 DEFAULT_HTTP_HEADERS = {
@@ -36,10 +56,7 @@ def _ydl_opts() -> dict:
         "extract_flat": False,
         "http_headers": DEFAULT_HTTP_HEADERS,
     }
-    if settings.YTDLP_COOKIES_FILE:
-        opts["cookiefile"] = settings.YTDLP_COOKIES_FILE
-    elif settings.YTDLP_COOKIES_FROM_BROWSER:
-        opts["cookiesfrombrowser"] = settings.YTDLP_COOKIES_FROM_BROWSER
+    _apply_authentication(opts)
     return opts
 
 
