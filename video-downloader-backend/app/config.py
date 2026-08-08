@@ -2,6 +2,54 @@ import os
 import shutil
 from pathlib import Path
 
+from dotenv import load_dotenv
+from pydantic import BaseModel
+
+
+load_dotenv()
+
+
+class Settings(BaseModel):
+    # Comma-separated list of origins allowed to call this API
+    ALLOWED_ORIGINS: str = os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://localhost:3000",
+    )
+
+    # Where downloaded files are staged before being sent to the client
+    DOWNLOAD_DIR: str = os.getenv(
+        "DOWNLOAD_DIR",
+        "./tmp_downloads",
+    )
+
+    # Safety cap: refuse to resolve/download media longer than this
+    MAX_DURATION_SECONDS: int = int(
+        os.getenv("MAX_DURATION_SECONDS", "10800")
+    )
+
+    # How old a leftover job folder must be before cleanup
+    MAX_FILE_AGE_MINUTES: int = int(
+        os.getenv("MAX_FILE_AGE_MINUTES", "30")
+    )
+
+    # Optional FFmpeg location.
+    # Leave empty on Render so the system /usr/bin binaries are detected.
+    FFMPEG_LOCATION: str = os.getenv(
+        "FFMPEG_LOCATION",
+        "",
+    )
+
+
+    # Optional frontend build directory
+    FRONTEND_DIST: Path | None = None
+
+
+
+# IMPORTANT:
+# app.main and app.services.downloader import this object.
+settings = Settings()
+
+
 # Binary names
 _FFMPEG_EXE = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
 _FFPROBE_EXE = "ffprobe.exe" if os.name == "nt" else "ffprobe"
@@ -17,7 +65,7 @@ def _ffmpeg_bin_dir() -> Path:
     3. System PATH
     """
 
-    # 1. Explicit environment variable
+    # 1. Explicit FFMPEG_LOCATION
     if settings.FFMPEG_LOCATION:
         configured = Path(settings.FFMPEG_LOCATION).expanduser()
 
@@ -25,7 +73,11 @@ def _ffmpeg_bin_dir() -> Path:
             return configured
 
     # 2. Bundled FFmpeg directory
-    bundled = Path(__file__).resolve().parent.parent / "ffmpeg" / "bin"
+    bundled = (
+        Path(__file__).resolve().parent.parent
+        / "ffmpeg"
+        / "bin"
+    )
 
     if (
         (bundled / _FFMPEG_EXE).exists()
@@ -33,15 +85,13 @@ def _ffmpeg_bin_dir() -> Path:
     ):
         return bundled
 
-    # 3. System FFmpeg
+    # 3. System FFmpeg installed by Docker
     ffmpeg_path = shutil.which("ffmpeg")
     ffprobe_path = shutil.which("ffprobe")
 
     if ffmpeg_path and ffprobe_path:
         return Path(ffmpeg_path).resolve().parent
 
-    # Return system location if either executable exists.
-    # ffmpeg_status() will report the missing executable.
     if ffmpeg_path:
         return Path(ffmpeg_path).resolve().parent
 
@@ -60,17 +110,26 @@ def ffmpeg_location() -> str:
 def ffmpeg_status() -> tuple[bool, list[str]]:
     """Check whether ffmpeg and ffprobe are available."""
 
-    bin_dir = _ffmpeg_bin_dir()
-
     missing = []
 
-    for name in (_FFMPEG_EXE, _FFPROBE_EXE):
-        executable = bin_dir / name
+    # First check system PATH.
+    ffmpeg_path = shutil.which("ffmpeg")
+    ffprobe_path = shutil.which("ffprobe")
 
-        if not executable.exists():
-            # Also check system PATH
-            if shutil.which(name) is None:
-                missing.append(name)
+    # If system binaries exist, they are available.
+    if not ffmpeg_path:
+        bin_dir = _ffmpeg_bin_dir()
+        local_ffmpeg = bin_dir / _FFMPEG_EXE
+
+        if not local_ffmpeg.exists():
+            missing.append("ffmpeg")
+
+    if not ffprobe_path:
+        bin_dir = _ffmpeg_bin_dir()
+        local_ffprobe = bin_dir / _FFPROBE_EXE
+
+        if not local_ffprobe.exists():
+            missing.append("ffprobe")
 
     return len(missing) == 0, missing
 
