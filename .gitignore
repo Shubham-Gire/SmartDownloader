@@ -41,6 +41,14 @@ Thumbs.db
 .env
 .env.*
 
+# Python packaging
+pip-wheel-metadata/
+
 # Local uploads / generated files
 uploads/
 media/
+
+# npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
