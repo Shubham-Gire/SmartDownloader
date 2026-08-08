@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 class Settings(BaseModel):
@@ -48,6 +48,9 @@ class Settings(BaseModel):
         "YTDLP_COOKIES_FROM_BROWSER",
         "",
     )
+
+    # Server port for uvicorn when run via `python run.py`
+    PORT: int = int(os.getenv("PORT", "8000"))
 
     # Optional frontend distribution directory
     FRONTEND_DIST: Path | None = None

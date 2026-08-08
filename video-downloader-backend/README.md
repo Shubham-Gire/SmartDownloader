@@ -76,10 +76,16 @@ const info = await res.json()
 Set `ALLOWED_ORIGINS` in `.env` to match wherever the frontend is served
 from (defaults already cover the Vite dev server on `localhost:5173`).
 
-If Instagram content requires login or cookies, configure one of these:
+If Instagram or YouTube content requires authentication, configure one of
+these:
 
 - `YTDLP_COOKIES_FILE=path/to/cookies.txt`
 - `YTDLP_COOKIES_FROM_BROWSER=chrome`
+
+For YouTube videos that show "Sign in to confirm you're not a bot," export a
+cookies file from a browser where you're already signed in and point
+`YTDLP_COOKIES_FILE` at it. If you prefer local browser access, use
+`YTDLP_COOKIES_FROM_BROWSER=chrome`.
 
 This lets yt-dlp use browser cookies for authenticated downloads when public
 access is blocked.
