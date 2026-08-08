@@ -1,25 +1,23 @@
 FROM python:3.11-slim
 
-# Install FFmpeg and certificates
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
         ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Verify both executables exist
+RUN which ffmpeg && which ffprobe
+
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt /app/requirements.txt
+COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application
-COPY . /app
+COPY . .
 
 ENV PYTHONUNBUFFERED=1
-
-# Render provides PORT automatically
 
 EXPOSE 8000
 
