@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import Navbar from './components/Navbar.jsx'
 import Hero from './components/Hero.jsx'
 import HowItWorks from './components/HowItWorks.jsx'
@@ -50,6 +51,7 @@ export default function App() {
         )}
       </main>
       <Footer />
+      <Analytics />
     </div>
   )
 }
